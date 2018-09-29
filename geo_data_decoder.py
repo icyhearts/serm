@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 from model.rnn_model_keras import geo_lprnn_model,geo_lprnn_text_model,geo_lprnn_trainable_text_model
 from eval_tools import *
 import config
@@ -26,7 +26,7 @@ def decode_data_fs(threshold=RECORD_TH):
         poifs = l.split(',')
         # print len(poifs)
         if len(poifs)>5:
-            print 'error'
+            print ('error')
         pois[poifs[0]] = poifs
 
     useful_poi = {}
@@ -37,32 +37,32 @@ def decode_data_fs(threshold=RECORD_TH):
     tsfls = tsf.readlines()
     for l in tsfls:
         cifs = l.replace('\n', '').split('')
-        if pois.has_key(cifs[8]):
-            if poi_cis.has_key(cifs[8]) :
+        if cifs[8] in pois: # pois.has_key(cifs[8]):
+            if cifs[8] in poi_cis: #poi_cis.has_key(cifs[8]) :
                 poi_cis[cifs[8]].append(cifs)
             else:
                 poi_cis[cifs[8]] = []
-                poi_cis[cifs[8]].append(cifs)
+                poi_cis[cifs[8]].append(cifs) # you fill poi_cis but you don't use it
 
-            if user_cis.has_key(cifs[1]):
+            if cifs[1] in user_cis: # user_cis.has_key(cifs[1]):
                 user_cis[cifs[1]].append(cifs)
             else:
                 user_cis[cifs[1]] = []
                 user_cis[cifs[1]].append(cifs)
 
-            if poi_catecology_dict.has_key(pois[cifs[8]][3]):
+            if pois[cifs[8]][3] in poi_catecology_dict: #poi_catecology_dict.has_key(pois[cifs[8]][3]):
                 poi_catecology_dict[pois[cifs[8]][3]].append(pois[cifs[8]])
             else:
                 poi_catecology_dict[pois[cifs[8]][3]] = []
                 poi_catecology_dict[pois[cifs[8]][3]].append(pois[cifs[8]])
 
     for u in user_cis.keys():
-        if len(user_cis[u])>= threshold:
+        if len(user_cis[u])>= threshold: # threshold=50 <paper>:Then we remove the users that have fewer than 50 records
             useful_user_cis[u] = user_cis[u]
             for r in user_cis[u]:
-                if not useful_poi.has_key(r[8]):
+                if not r[8] in useful_poi: #useful_poi.has_key(r[8]):
                     useful_poi[r[8]] = pois[r[8]]
-    for p in useful_poi.keys():
+    for p in useful_poi.keys(): # you fill x,y,index, but not using or return them? why?
         poifs = pois[p]
         x.append(float(poifs[1]))
         y.append(float(poifs[2]))
@@ -75,7 +75,7 @@ def decode_data_fs(threshold=RECORD_TH):
 
 def geo_data_clean_fs(w = WINDOW_SIZE, min_seq_num = MIN_SEQ, min_traj_num = MIN_TRAJ, locationtpye ='GRADE',
                       gridc = GRID_COUNT):
-    poi_attr, user_ci, poi_catecology_dict = decode_data_fs()
+    poi_attr, user_ci, poi_catecology_dict = decode_data_fs() # poi_catecology_dict is never used again, why you return it from decode_data_fs?
     users = user_ci.keys()
     user_record_sequence = {}
     useful_poi_dict = {}
@@ -94,7 +94,7 @@ def geo_data_clean_fs(w = WINDOW_SIZE, min_seq_num = MIN_SEQ, min_traj_num = MIN
                     perious_record = record
 
                 time = record[4]
-                if time_diff(time,perious_record[4])< w:
+                if time_diff(time,perious_record[4])< w: # w: unit: second
                     traj_records.append(record)
                 else:
                     if len(traj_records)>min_seq_num:
@@ -102,11 +102,11 @@ def geo_data_clean_fs(w = WINDOW_SIZE, min_seq_num = MIN_SEQ, min_traj_num = MIN
                     traj_records = []
                 perious_record = record
             except Exception as e:
-                print e
+                print (e)
         if (len(traj_records)>0) & (len(traj_records)>min_seq_num):
             clean_records.append(traj_records)
 
-        if len(clean_records)>min_traj_num:
+        if len(clean_records)>min_traj_num: #每个user的短链traj的数目,每个长链包含的短链的数目有一个下界，大于这个下界的才有效
             user_record_sequence[user] = clean_records
 
     # generate useful pois
@@ -114,7 +114,7 @@ def geo_data_clean_fs(w = WINDOW_SIZE, min_seq_num = MIN_SEQ, min_traj_num = MIN
         trajs = user_record_sequence[user]
         for traj in trajs:
             for record in traj:
-                if not useful_poi_dict.has_key(record[8]):
+                if not record[8] in useful_poi_dict: #useful_poi_dict.has_key(record[8]):
                     useful_poi_dict[record[8]] = []
                     useful_poi_dict[record[8]].append(record)
 
@@ -147,25 +147,25 @@ def geo_data_clean_fs(w = WINDOW_SIZE, min_seq_num = MIN_SEQ, min_traj_num = MIN
             if seg_max_record < len(traj):
                 seg_max_record = len(traj)
             for record in traj:
-                pl_features.append(poi_index_dict[record[8]]+1)
+                pl_features.append(poi_index_dict[record[8]]+1) # why +1?
                 time_features.append(time_hour(record[4])+1)
                 text_features.append(record[6])
             all_sequ_features.append([pl_features,time_features,text_features])
         user_feature_sequence[user] = all_sequ_features
-    print 'seg_max_record, pois_num, user_num'
-    print seg_max_record, len(poi_index_dict.keys()),len(user_feature_sequence.keys())
+    print ('seg_max_record, pois_num, user_num')
+    print (seg_max_record, len(poi_index_dict.keys()),len(user_feature_sequence.keys()))
 
     user_feature_sequence_text, useful_vec= text_feature_generation(user_feature_sequence)
 
-    cPickle.dump((user_feature_sequence_text, poi_index_dict, seg_max_record, center_location_list, useful_vec),
-                 open('./features/features&index_seg_gride_fs', 'w'))
+    pickle.dump((user_feature_sequence_text, poi_index_dict, seg_max_record, center_location_list, useful_vec),
+                 open('./features/features&index_seg_gride_fs', 'wb'))
 
     return user_feature_sequence_text, poi_index_dict, seg_max_record, center_location_list, useful_vec
 
 def decode_data_la(threshold = RECORD_TH):
     tsf = open(LA_TWEETS)
     tsfls = tsf.readlines()
-    print tsfls[0].split('')
+    print (tsfls[0].split(''))
     x = []
     y = []
     for l in tsfls:
@@ -179,7 +179,7 @@ def decode_data_la(threshold = RECORD_TH):
         l = tsfls[i]
         cifs = l.replace('\n', '').split('')
 
-        if user_cis.has_key(cifs[1]):
+        if cifs[1] in user_cis: # user_cis.has_key(cifs[1]):
             user_cis[cifs[1]].append(cifs)
         else:
             user_cis[cifs[1]] = []
@@ -216,7 +216,7 @@ def geo_data_clean_la(w = WINDOW_SIZE,min_seq_num = MIN_SEQ, max_seq_num = MAX_S
 
                 time = record[4]
                 dif = time_diff_la(time,perious_record[4])
-                if dif<0: print "Fasle"
+                if dif<0: print ("Fasle")
                 if (dif< w) & (dif>0):
                     # print time_diff(time,perious_record[4])
                     traj_records.append(record)
@@ -227,7 +227,7 @@ def geo_data_clean_la(w = WINDOW_SIZE,min_seq_num = MIN_SEQ, max_seq_num = MAX_S
                     traj_records = []
                 perious_record = record
             except Exception as e:
-                print e
+                print (e)
         if (len(traj_records)>0) & (len(traj_records)>min_seq_num) & (len(traj_records)<max_seq_num):
             if check_records_locations(traj_records):
                 clean_records.append(traj_records)
@@ -240,7 +240,7 @@ def geo_data_clean_la(w = WINDOW_SIZE,min_seq_num = MIN_SEQ, max_seq_num = MAX_S
         trajs = user_record_sequence[user]
         for traj in trajs:
             for record in traj:
-                if not useful_poi_dict.has_key(record[0]):
+                if not record[0] in useful_poi_dict: # useful_poi_dict.has_key(record[0]):
                     useful_poi_dict[record[0]] = []
                     useful_poi_dict[record[0]].append(record)
 
@@ -280,11 +280,11 @@ def geo_data_clean_la(w = WINDOW_SIZE,min_seq_num = MIN_SEQ, max_seq_num = MAX_S
                 # pl_records_modify.append(record[0])
             all_sequ_features.append([pl_features,time_features,text_features])
         user_feature_sequence[user] = all_sequ_features
-    print 'seg_max_record, pois_num, user_num'
-    print seg_max_record, len(poi_index_dict.keys()),len(user_feature_sequence.keys())
+    print ('seg_max_record, pois_num, user_num')
+    print (seg_max_record, len(poi_index_dict.keys()),len(user_feature_sequence.keys()))
     grid_count = {}
     for poi in poi_index_dict.keys():
-        if not grid_count.has_key(poi_index_dict[poi]):
+        if not poi_index_dict[poi] in grid_count: # grid_count.has_key(poi_index_dict[poi]):
             grid_count[poi_index_dict[poi]] = 1
         else:
             grid_count[poi_index_dict[poi]] += 1
@@ -292,7 +292,7 @@ def geo_data_clean_la(w = WINDOW_SIZE,min_seq_num = MIN_SEQ, max_seq_num = MAX_S
     print ("userful poi nums:",len(grid_count.keys()))
 
     user_feature_sequence_text, useful_vec= text_feature_generation(user_feature_sequence,dataset='LA')
-    cPickle.dump((user_feature_sequence_text, poi_index_dict,seg_max_record, center_location_list, useful_vec),
-                 open('./features/features&index_seg_gride_la', 'w'))
+    pickle.dump((user_feature_sequence_text, poi_index_dict,seg_max_record, center_location_list, useful_vec),
+                 open('./features/features&index_seg_gride_la', 'wb'))
 
     return user_feature_sequence_text, poi_index_dict, seg_max_record, center_location_list, useful_vec

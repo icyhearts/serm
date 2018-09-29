@@ -9,7 +9,7 @@ def train(dataset = 'FS'):
 
     if dataset == 'FS':
         user_feature_sequence, place_index, seg_max_record, center_location_list, useful_vec = geo_data_clean_fs()
-        print len(user_feature_sequence.keys())
+        print (len(user_feature_sequence.keys()))
         train_X, train_Y, train_evl, vali_X, vali_Y, vali_evl, user_dim, word_vec, word_index \
             = geo_dataset_train_test_text(user_feature_sequence, useful_vec, seg_max_record)
         print ("Feature generation completed")
@@ -26,7 +26,7 @@ def train(dataset = 'FS'):
 
     elif dataset=='LA':
         user_feature_sequence, place_index, seg_max_record, center_location_list, useful_vec= geo_data_clean_la()
-        print len(user_feature_sequence.keys())
+        print (len(user_feature_sequence.keys()))
 
         train_X, train_Y, train_evl, vali_X, vali_Y, vali_evl, user_dim, word_vec, word_index\
             = geo_dataset_train_test_text(user_feature_sequence,useful_vec, seg_max_record)

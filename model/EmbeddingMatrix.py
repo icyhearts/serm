@@ -39,7 +39,7 @@ def test():
 
     traindata = [[[0.1,0,0,0.9] for i in range(2)] for j in range(10)]
     re = model.predict(traindata)
-    print re
+    print (re)
 
 if __name__ == '__main__':
     test()

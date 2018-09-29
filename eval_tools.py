@@ -16,7 +16,7 @@ TRAINING_EPOCH = config.training_epoch
 TRAIN_TEST_PART = config.train_test_part
 random.seed(2017)
 
-def time_hour(ci_time, form = '%Y-%m-%d %X'):
+def time_hour(ci_time, form ='%Y-%m-%d %H:%M:%S'):
     st = time.strptime(ci_time, form)
     mounth = st.tm_mon
     weekday = st.tm_wday
@@ -26,12 +26,12 @@ def time_hour(ci_time, form = '%Y-%m-%d %X'):
     else:
         return (24+hour)
 
-def time_diff(time1,time2,form = '%Y-%m-%d %X'):
+def time_diff(time1,time2,form = '%Y-%m-%d %H:%M:%S'):
     time11 = time.strptime(time1, form)
     time22 = time.strptime(time2, form)
-    return abs(int(time.mktime(time11))-int(time.mktime(time22)))
+    return abs(int(time.mktime(time11))-int(time.mktime(time22))) # unit: seconds
 
-def time_diff_la(time1,time2,form = '%Y-%m-%d %X'):
+def time_diff_la(time1,time2,form = '%Y-%m-%d %H:%M:%S'):
     s = time1
     if 'CDT' in s:
         t1 = time.strptime(s.replace(' CDT',''))
@@ -50,7 +50,7 @@ def time_diff_la(time1,time2,form = '%Y-%m-%d %X'):
 
     return abs(int(time.mktime(t1))-int(time.mktime(t2)))
 
-def time_hour_la(ci_time, form = '%Y-%m-%d %X'):
+def time_hour_la(ci_time,form ='%Y-%m-%d %H:%M:%S'):
     s = ci_time
     if 'CDT' in s:
         st = time.strptime(s.replace(' CDT',''))
@@ -83,7 +83,7 @@ def haversine(lon1, lat1, lon2, lat2):
 
 def geo_grade(index, x, y, m_nGridCount=GRID_COUNT):
     dXMax, dXMin, dYMax, dYMin = max(x), min(x), max(y), min(y)
-    print dXMax, dXMin, dYMax, dYMin
+    print (dXMax, dXMin, dYMax, dYMin)
     m_dOriginX = dXMin
     m_dOriginY = dYMin
     dSizeX = (dXMax - dXMin) / m_nGridCount
@@ -102,16 +102,16 @@ def geo_grade(index, x, y, m_nGridCount=GRID_COUNT):
         nXCol = int((x[i] - m_dOriginX) / dSizeX)
         nYCol = int((y[i] - m_dOriginY) / dSizeY)
         if nXCol >= m_nGridCount:
-            print 'max X'
+            print ('max X')
             nXCol = m_nGridCount - 1
 
         if nYCol >= m_nGridCount:
-            print 'max Y'
+            print ('max Y')
             nYCol = m_nGridCount - 1
 
         iIndex = nYCol * m_nGridCount + nXCol
         poi_index_dict[index[i]] = iIndex
-        m_vIndexCells[iIndex].append([index[i], x[i], y[i]])
+        m_vIndexCells[iIndex].append([index[i], x[i], y[i]]) # you fill m_vIndexCells but don't use it or return it, why?
 
     return poi_index_dict, center_location_list
 
@@ -146,10 +146,10 @@ def evaluation_last_with_distance(all_output_array, all_test_Y, center_location_
                 if true_pl in infe_pl[1:].argsort()[-15:][::-1]: all_recall4 += 1
                 if true_pl in infe_pl[1:].argsort()[-20:][::-1]: all_recall5 += 1
                 count += 1
-    print count
-    print [all_recall1,all_recall2,all_recall3, all_recall4, all_recall5]
-    print [all_recall1 / count, all_recall2 / count,
-           all_recall3 / count, all_recall4 / count, all_recall5 / count, alldistance / count]
+    print (count)
+    print ([all_recall1,all_recall2,all_recall3, all_recall4, all_recall5])
+    print ([all_recall1 / count, all_recall2 / count,
+           all_recall3 / count, all_recall4 / count, all_recall5 / count, alldistance / count])
     return [all_recall1 / count, all_recall2 / count,
             all_recall3 / count, all_recall4 / count, all_recall5 / count, alldistance / count]
 
@@ -200,8 +200,8 @@ def nearest_location_last(vali_X, vali_evl, center_location_list):
                 if count % 100 == 0: print ("nearest location last",count)
     print ("nearest location last",count)
     print (hc1 , hc5 , hc10, hc15, hc20)
-    print [hc1 / count, hc5 / count,
-           hc10 / count, hc15 / count, hc20 / count, alldistance / count]
+    print ([hc1 / count, hc5 / count,
+           hc10 / count, hc15 / count, hc20 / count, alldistance / count])
 
 def load_wordvec(vecpath = WORD_VEC_PATH):
     word_vec = {}
@@ -221,10 +221,10 @@ def text_feature_generation(user_feature_sequence, dataset='FS'):
     count = 0
     for u in user_feature_sequence.keys():
         features = user_feature_sequence[u]
-        for traj_fea in range(len(features)):
+        for traj_fea in range(len(features)): # traj_fea indexes which traj of this user
             useful_word_sample = []
             for i in range(len(features[traj_fea][2])):
-                text = features[traj_fea][2][i]
+                text = features[traj_fea][2][i] # text: the text from a record from a traj
                 words_key = []
                 if not text == 0:
                     words = []
@@ -233,16 +233,16 @@ def text_feature_generation(user_feature_sequence, dataset='FS'):
                     elif dataset=='LA':
                         words = text.split('\t')
                     for w in words:
-                        if (text_vec.has_key(w)) & (not useful_vec.has_key(w)):
+                        if ( w in text_vec) & (not w in useful_vec): #if (text_vec.has_key(w)) & (not useful_vec.has_key(w)):
                             useful_vec[w] = text_vec[w]
-                        if useful_vec.has_key(w):
+                        if w in useful_vec: #if useful_vec.has_key(w):
                             words_key.append(w)
-                else: print "Text == 0"
+                else: print ("Text == 0")
                 useful_word_sample.append(words_key)
                 # if len(words_key) ==0 : print ("record empty useful words")
             user_feature_sequence[u][traj_fea].append(useful_word_sample)
         # if count % 20 ==0:
-        #     print user_feature_sequence[u]
+        #     print (user_feature_sequence[u])
     return user_feature_sequence,useful_vec
 
 def text_features_to_categorical(text_features_train, word_index):
@@ -274,16 +274,16 @@ def geo_dataset_train_test_text(user_feature_sequence, useful_vec, max_record, p
 
     user_index = {}
     for u in range(len(user_feature_sequence.keys())):
-        user_index[user_feature_sequence.keys()[u]] = u
+        user_index[list(user_feature_sequence.keys())[u]] = u # user_index[user_feature_sequence.keys()[u]] = u
     user_dim = len(user_feature_sequence.keys())
 
     word_index = {}
     word_vec = []
     for w in range(len(useful_vec.keys())):
-        word_index[useful_vec.keys()[w]] = w
-        word_vec.append(useful_vec[useful_vec.keys()[w]])
+        word_index[list(useful_vec.keys())[w] ] = w #word_index[useful_vec.keys()[w]] = w
+        word_vec.append(useful_vec[list(useful_vec.keys())[w]]) # word_vec.append(useful_vec[useful_vec.keys()[w]])
     word_vec = np.array(word_vec)
-    print word_vec.shape
+    print (word_vec.shape)
     all_train_X_pl, all_train_X_time , all_train_X_user, all_train_X_text , all_train_Y, all_train_evl \
         = [],[],[],[],[],[]
     all_test_X_pl, all_test_X_time, all_test_X_user, all_test_X_text, all_test_Y, all_test_evl \
@@ -336,8 +336,8 @@ def geo_dataset_train_test_text(user_feature_sequence, useful_vec, max_record, p
             all_test_Y.append(to_categorical(test_y, num_classes=place_dim + 1))
             all_test_evl.append(test_y)
 
-    print all_train_X_pl[0]
-    print all_train_evl[0]
+    print (all_train_X_pl[0])
+    print (all_train_evl[0])
     all_train_X_pl =  np.array(all_train_X_pl)
     all_train_X_time = np.array(all_train_X_time)
     all_train_X_user = np.array(all_train_X_user)
@@ -364,7 +364,7 @@ def geo_rnn_train_batch_text(train_X, train_Y, vali_X, vali_Y,vali_evl, model,ce
                         epochs=1, max_queue_size=7, validation_data=(vali_X,vali_Y),workers=5)
         all_output_array = model.predict(vali_X)
         evaluation_last_with_distance(all_output_array, vali_evl, center_location_list)
-        print  './model/' + dataset + '_' + MODEL_NAME + '_' + str(i) + '.h5'
+        print  ('./model/' + dataset + '_' + MODEL_NAME + '_' + str(i) + '.h5')
         model.save('./model/' + dataset + '_' + MODEL_NAME + '_' + str(i) + '.h5')
 
 class threadsafe_iter:
@@ -378,9 +378,9 @@ class threadsafe_iter:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         with self.lock:
-            return self.it.next()
+            return next(self.it) # return self.it.next()
 
 def threadsafe_generator(f):
     """A decorator that takes a generator function and makes it thread-safe.

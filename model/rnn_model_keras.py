@@ -1,9 +1,11 @@
+import keras
 from keras.models import Sequential,Model
-from keras.layers import Embedding, Dense, merge, SimpleRNN, Merge, Activation, LSTM, GRU, Dropout,Input,TimeDistributed
+from keras.layers import Embedding, Dense, merge, SimpleRNN,  Activation, LSTM, GRU, Dropout,Input,TimeDistributed
 from keras import optimizers
-from EmbeddingMatrix import EmbeddingMatrix
+from model.EmbeddingMatrix import EmbeddingMatrix
 from keras.utils.np_utils import to_categorical
 import config
+import tensorflow as tf
 
 GRID_COUNT = config.GRID_COUNT
 
@@ -58,10 +60,10 @@ def geo_lprnn_model(user_dim, len, place_dim = GRID_COUNT*GRID_COUNT, time_dim=c
     user_embedding = Embedding(input_dim=user_dim + 1, output_dim=place_dim + 1, name='user_embedding',
                                mask_zero=True)(user_input)
 
-    attrs_latent = merge([pl_embedding,time_embedding],mode='concat')
+    attrs_latent = merge.Concatenate([pl_embedding,time_embedding]) #attrs_latent = merge([pl_embedding,time_embedding],mode='concat')
     lstm_out = LSTM(hidden_neurons, return_sequences=True,name='lstm_layer')(attrs_latent)
     dense = Dense(place_dim + 1, name='dense')(lstm_out)
-    out_vec = merge([dense,user_embedding],mode='sum')
+    out_vec = merge.Add([dense,user_embedding]) # out_vec = merge([dense,user_embedding],mode='sum')
     pred = Activation('softmax')(out_vec)
     model = Model([pl_input,time_input,user_input], pred)
 
@@ -91,11 +93,11 @@ def geo_lprnn_text_model(user_dim, len, place_dim = GRID_COUNT*GRID_COUNT, time_
                                mask_zero=True)(user_input)
     # text_embedding = Dense(pl_d)(text_input)
 
-    attrs_latent = merge([pl_embedding,time_embedding, text_input],mode='concat')
+    attrs_latent = merge.Concatenate([pl_embedding,time_embedding, text_input]) # attrs_latent = merge([pl_embedding,time_embedding, text_input],mode='concat')
     # time_dist = TimeDistributed(Dense(50))
     lstm_out = LSTM(hidden_neurons, return_sequences=True,name='lstm_layer')(attrs_latent)
     dense = Dense(place_dim + 1, name='dense')(lstm_out)
-    out_vec = merge([dense,user_embedding],mode='sum')
+    out_vec = merge.Add([dense,user_embedding]) # out_vec = merge([dense,user_embedding],mode='sum')
     pred = Activation('softmax')(out_vec)
     model = Model([pl_input,time_input,user_input,text_input], pred)
 
@@ -128,14 +130,14 @@ def geo_lprnn_trainable_text_model(user_dim, len,word_vec, place_dim = GRID_COUN
     #                           weights=[word_vec],name="text_embeddng")(text_input)
     text_embedding = EmbeddingMatrix(TEXT_K, weights=[word_vec], name="text_embeddng", trainable=True)(text_input)
 
-    attrs_latent = merge([pl_embedding,time_embedding, text_embedding],mode='concat')
+    attrs_latent = keras.layers.concatenate([pl_embedding,time_embedding, text_embedding]) #attrs_latent = ([pl_embedding,time_embedding, text_embedding], 0) # attrs_latent = merge.Concatenate([pl_embedding,time_embedding, text_embedding]) # attrs_latent = merge([pl_embedding,time_embedding, text_embedding],mode='concat')
     # time_dist = TimeDistributed(Dense(50))
     lstm_out = LSTM(hidden_neurons, return_sequences=True,name='lstm_layer0')(attrs_latent)
     # lstm_out = LSTM(hidden_neurons, return_sequences=True, name='lstm_layer1')(lstm_out)
     # lstm_out = LSTM(hidden_neurons, return_sequences=True, name='lstm_layer2')(lstm_out)
     dense = Dense(place_dim + 1, name='dense')(lstm_out)
-    out_vec = merge([dense,user_embedding],mode='sum')
-    pred = Activation('softmax')(out_vec)
+    out_vec = keras.layers.add([dense,user_embedding]) #     out_vec = merge.Add([dense,user_embedding]) # out_vec = merge([dense,user_embedding],mode='sum')
+    pred = Activation('softmax')(out_vec) # pred = Activation('softmax')(dense+user_embedding)# pred = Activation('softmax')(out_vec)
     model = Model([pl_input,time_input,user_input,text_input], pred)
 
     # model.load_weights('./model/User_RNN_Seg_Epoch_0.3_rmsprop_300.h5')
